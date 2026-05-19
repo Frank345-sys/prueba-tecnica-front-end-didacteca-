@@ -12,7 +12,8 @@ Aplicación web de **Rick and Morty** construida con Next.js App Router. Consult
 - Gráfico de distribución por **especie** (Recharts) según la página actual.
 - Tarjetas con imagen, estado, especie y botón de **favoritos**.
 - Enlace al detalle en `/character/[id]`.
-- Estados de carga, error y sin resultados con transiciones (Framer Motion).
+- Estados de carga, error y sin resultados con transiciones (Framer Motion); al cambiar vista tarjeta/lista también se reanima el contenido.
+- Mensajes de error genéricos en UI (sin exponer detalles de GraphQL al usuario).
 
 ### Favoritos (`/favorites`)
 
@@ -22,6 +23,7 @@ Aplicación web de **Rick and Morty** construida con Next.js App Router. Consult
 - Carga de datos con `charactersByIds` respetando el orden del store.
 - Vista tarjeta o lista, igual que el listado principal.
 - Aviso al alcanzar el máximo: al añadir otro desde el listado se elimina el último del orden.
+- Sincronización automática si un ID guardado ya no existe en la API (`actions.syncIds`).
 
 ### Detalle (`/character/[id]`)
 
@@ -29,6 +31,7 @@ Aplicación web de **Rick and Morty** construida con Next.js App Router. Consult
 - Imagen, nombre, especie, género y badge de estado.
 - Botón de favoritos integrado con el mismo store global.
 - Validación de ID y pantalla de personaje no encontrado.
+- Metadatos dinámicos (título con nombre del personaje) vía fetch en servidor.
 
 ## Stack
 
@@ -81,9 +84,12 @@ Abre [http://localhost:3000](http://localhost:3000).
 ```
 src/
 ├── app/                          # App Router
-│   ├── page.tsx                  # Listado principal (/)
-│   ├── favorites/page.tsx        # Favoritos (/favorites)
-│   ├── character/[id]/page.tsx   # Detalle (/character/[id])
+│   ├── page.tsx                  # Listado principal (/) — SSG
+│   ├── favorites/page.tsx        # Favoritos (/favorites) — SSG
+│   ├── character/[id]/
+│   │   ├── page.tsx              # Detalle — ISR + generateStaticParams
+│   │   └── loading.tsx           # Streaming SSR del segmento
+│   ├── error.tsx                 # Error boundary global
 │   ├── layout.tsx                # Layout raíz (header, footer, providers)
 │   └── globals.css
 ├── components/
@@ -103,10 +109,10 @@ src/
 │       └── compounds/            # CardItem, ListItem, ViewToggle
 ├── constants/                    # favoritos, animaciones
 ├── graphql/queries/              # GET_CHARACTERS, GET_CHARACTERS_BY_IDS, GET_CHARACTER
-├── lib/                          # apollo-client, cn
+├── lib/                          # apollo-client, apollo-cache, cn, graphql-server
 ├── store/                        # useFavoritesStore (Zustand)
 ├── types/                        # rick-and-morty.ts
-└── utils/                        # async-content-key, character-status, etc.
+└── utils/                        # async-content-key, character-route-id, user-facing-error, etc.
 ```
 
 ## Rutas
@@ -160,12 +166,30 @@ Políticas en `src/lib/apollo-cache.ts`. Los personajes se normalizan por `id` e
 
 ## Estado global (favoritos)
 
-El store `useFavoritesStore` (`src/store/useFavoritesStore.ts`) expone:
+El store `useFavoritesStore` (`src/store/useFavoritesStore.ts`) agrupa estado y acciones:
 
-- `toggleFavorite(id)` — añadir o quitar favorito.
-- `isFavorite(id)` — comprobar si está en la lista.
-- `moveFavoriteUp` / `moveFavoriteDown` — reordenar en `/favorites`.
-- Persistencia en `localStorage` bajo la clave `rick-morty-favorites`.
+| Grupo     | Campo / método        | Uso                                           |
+| --------- | --------------------- | --------------------------------------------- |
+| `list`    | `ids`                 | Orden persistido de IDs numéricos             |
+| `list`    | `hasHydrated`         | `true` tras rehidratar desde `localStorage`   |
+| `actions` | `toggle(id)`          | Añadir, quitar o sustituir el último si hay 5 |
+| `actions` | `isFavorite(id)`      | Comprobar si el ID está en la lista           |
+| `actions` | `syncIds(validIds)`   | Alinear con IDs devueltos por la API          |
+| `actions` | `moveUp` / `moveDown` | Reordenar en `/favorites`                     |
+
+Persistencia en `localStorage` bajo la clave `rick-morty-favorites`. Al rehidratar se filtran IDs inválidos y se respeta el máximo de 5.
+
+## Hooks de datos
+
+Los hooks de listado exponen el estado agrupado por concepto (los componentes no leen `data` de Apollo directamente):
+
+| Hook                    | Grupos principales            |
+| ----------------------- | ----------------------------- |
+| `useCharacterList`      | `ui`, `filters`, `query`      |
+| `useFavoriteCharacters` | `ui`, `list`, `query`         |
+| `useCharacterDetail`    | `route`, `favorites`, `query` |
+
+Las transiciones de UI usan `getAsyncContentKey` (`src/utils/async-content-key.ts`) con claves por página, orden de favoritos o modo de vista.
 
 ## Calidad de código
 
@@ -193,9 +217,10 @@ Si falla el formato: `npm run format` y vuelve a hacer `git add`. Para build com
 Scopes permitidos: convencionales (`components`, `config`, `deps`, …) y de la app (`page`, `favorites`, `character`, `graphql`, `store`, `charts`, `providers`). Ver `commitlint.config.cjs`.
 
 ```text
-feat(page): add character grid
-feat(character): add detail route with origin and location
-fix(favorites): preserve order after rehydration
+feat(page): añadir listado de personajes con búsqueda
+feat(character): añadir ruta de detalle con origen y ubicación
+fix(favorites): preservar orden tras rehidratación
+fix(config): configurar SSG, ISR y CSR por ruta
 ```
 
 ### TSDoc
@@ -232,11 +257,12 @@ import { cn } from '@/lib/cn'
 
 El proyecto se organizó originalmente en ramas de feature desde `main`:
 
-| Rama                    | Contenido                    |
-| ----------------------- | ---------------------------- |
-| `feat/page`             | Listado principal            |
-| `feat/favorites`        | Página de favoritos          |
-| `feat/character-detail` | Detalle en `/character/[id]` |
+| Rama                    | Contenido                            |
+| ----------------------- | ------------------------------------ |
+| `feat/page`             | Listado principal                    |
+| `feat/favorites`        | Página de favoritos                  |
+| `feat/character-detail` | Detalle en `/character/[id]`         |
+| `fix/final-review`      | Revisión final, renderizado y pulido |
 
 ## Notas para agentes / IA
 
