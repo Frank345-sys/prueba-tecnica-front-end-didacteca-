@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from 'next/font/google'
 
+import { ScrollToTopButton, SiteFooter, SiteHeader } from '@/components/layout'
 import { Providers } from '@/components/providers/Providers'
 import { cn } from '@/lib/cn'
 
@@ -17,10 +18,16 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Prueba técnica | Didacteca',
-  description: 'Prueba técnica front-end',
+  title: {
+    default: 'Rick and Morty | Didacteca',
+    template: '%s | Rick and Morty',
+  },
+  description: 'Listado de personajes — prueba técnica front-end',
 }
 
+/**
+ * Layout raíz: fuentes, proveedores, cabecera, contenido, pie y botón «subir».
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,15 +36,21 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={cn(
-        geistSans.variable,
-        geistMono.variable,
-        'h-full antialiased'
-      )}
+      className={cn(geistSans.variable, geistMono.variable, 'h-full')}
       suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col" suppressHydrationWarning>
-        <Providers>{children}</Providers>
+      <body
+        className={cn(
+          'flex min-h-dvh flex-col bg-zinc-50 font-sans text-zinc-900 antialiased'
+        )}
+        suppressHydrationWarning
+      >
+        <Providers>
+          <SiteHeader />
+          <div className="flex flex-1 flex-col">{children}</div>
+          <SiteFooter />
+          <ScrollToTopButton />
+        </Providers>
       </body>
     </html>
   )
