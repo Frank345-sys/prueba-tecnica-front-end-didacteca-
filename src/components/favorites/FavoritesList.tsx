@@ -1,7 +1,5 @@
 'use client'
 
-import Link from 'next/link'
-
 import { AnimatePresence, motion } from 'framer-motion'
 
 import { ViewToggle } from '@/components/ui/compounds'
@@ -15,6 +13,7 @@ import {
   ASYNC_CONTENT_KEYS,
   getAsyncContentKey,
 } from '@/utils/async-content-key'
+import { USER_FACING_FETCH_ERROR } from '@/utils/user-facing-error'
 
 import { useFavoriteCharacters } from './hooks/useFavoriteCharacters'
 import { FavoriteReorderControls } from './subcomponentes/FavoriteReorderControls'
@@ -27,36 +26,25 @@ const gridClasses =
  * Orquesta estados de carga, error y vacío con {@link getAsyncContentKey}.
  */
 export function FavoritesList() {
-  const {
-    favoriteIds,
-    characters,
-    loading,
-    error,
-    data,
-    isEmpty,
-    viewMode,
-    setViewMode,
-  } = useFavoriteCharacters()
+  const { ui, list, query } = useFavoriteCharacters()
 
   const contentKey = getAsyncContentKey({
-    loading,
-    error,
-    hasData: isEmpty || data !== undefined,
-    isEmpty,
-    dataKey: favoriteIds.join('-'),
+    loading: query.loading,
+    error: query.error,
+    hasData: query.hasData,
+    isEmpty: query.isEmpty,
+    dataKey: list.ids.join('-'),
   })
 
-  const countLabel = `${favoriteIds.length}/${MAX_FAVORITES} favoritos`
+  const countLabel = `${list.ids.length}/${MAX_FAVORITES} favoritos`
 
   function renderContent() {
     if (contentKey === ASYNC_CONTENT_KEYS.loading) {
       return <Spinner className="py-16" />
     }
 
-    if (contentKey === ASYNC_CONTENT_KEYS.error && error) {
-      return (
-        <ErrorMessage message={`Error al cargar favoritos: ${error.message}`} />
-      )
+    if (contentKey === ASYNC_CONTENT_KEYS.error && query.error) {
+      return <ErrorMessage message={USER_FACING_FETCH_ERROR} />
     }
 
     if (contentKey === ASYNC_CONTENT_KEYS.empty) {
@@ -64,30 +52,23 @@ export function FavoritesList() {
         <EmptyState
           title="Aún no tienes favoritos"
           description={`Marca hasta ${MAX_FAVORITES} personajes desde el listado principal. El orden se guardará aquí.`}
-          action={
-            <Link
-              href="/"
-              className="text-sm font-medium text-emerald-700 underline-offset-2 hover:underline"
-            >
-              Ir al listado de personajes
-            </Link>
-          }
+          actionLabel="Ir al listado de personajes"
         />
       )
     }
 
-    if (viewMode === 'list') {
+    if (ui.viewMode === 'list') {
       return (
         <ul className={gridClasses}>
-          {characters.map((character, index) => (
+          {query.characters.map((character, index) => (
             <li key={character.id} className="flex list-none flex-col gap-2">
               <FavoriteReorderControls
                 characterId={Number(character.id)}
                 characterName={character.name}
                 index={index}
-                total={characters.length}
+                total={query.characters.length}
               />
-              <ListItem character={character} index={index} embedded />
+              <ListItem character={character} index={index} as="div" />
             </li>
           ))}
         </ul>
@@ -96,15 +77,15 @@ export function FavoritesList() {
 
     return (
       <ul className={cn(gridClasses, 'xl:grid-cols-4')}>
-        {characters.map((character, index) => (
+        {query.characters.map((character, index) => (
           <li key={character.id} className="flex list-none flex-col gap-2">
             <FavoriteReorderControls
               characterId={Number(character.id)}
               characterName={character.name}
               index={index}
-              total={characters.length}
+              total={query.characters.length}
             />
-            <CardItem character={character} index={index} embedded />
+            <CardItem character={character} index={index} as="div" />
           </li>
         ))}
       </ul>
@@ -116,12 +97,12 @@ export function FavoritesList() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-center text-sm text-zinc-600">{countLabel}</p>
         {contentKey !== ASYNC_CONTENT_KEYS.empty ? (
-          <ViewToggle view={viewMode} onViewChange={setViewMode} />
+          <ViewToggle view={ui.viewMode} onViewChange={ui.setViewMode} />
         ) : null}
       </div>
 
       {contentKey !== ASYNC_CONTENT_KEYS.empty &&
-      favoriteIds.length >= MAX_FAVORITES ? (
+      list.ids.length >= MAX_FAVORITES ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           Has alcanzado el máximo de {MAX_FAVORITES} favoritos. Si añades otro
           desde el listado, se eliminará el último de esta lista.
@@ -129,7 +110,7 @@ export function FavoritesList() {
       ) : null}
 
       <AnimatePresence mode="wait">
-        <motion.div key={contentKey} {...OVERLAY_FADE}>
+        <motion.div key={`${contentKey}-${ui.viewMode}`} {...OVERLAY_FADE}>
           {renderContent()}
         </motion.div>
       </AnimatePresence>

@@ -55,8 +55,8 @@ export function FavoriteReorderControls({
   index,
   total,
 }: FavoriteReorderControlsProps) {
-  const moveFavoriteUp = useFavoritesStore((state) => state.moveFavoriteUp)
-  const moveFavoriteDown = useFavoritesStore((state) => state.moveFavoriteDown)
+  const moveUp = useFavoritesStore((state) => state.actions.moveUp)
+  const moveDown = useFavoritesStore((state) => state.actions.moveDown)
 
   return (
     <div
@@ -70,7 +70,7 @@ export function FavoriteReorderControls({
         size="icon-sm"
         disabled={index === 0}
         aria-label={`Subir ${characterName} en la lista`}
-        onClick={() => moveFavoriteUp(characterId)}
+        onClick={() => moveUp(characterId)}
       >
         <ChevronUpIcon />
       </Button>
@@ -83,7 +83,7 @@ export function FavoriteReorderControls({
         size="icon-sm"
         disabled={index >= total - 1}
         aria-label={`Bajar ${characterName} en la lista`}
-        onClick={() => moveFavoriteDown(characterId)}
+        onClick={() => moveDown(characterId)}
       >
         <ChevronDownIcon />
       </Button>

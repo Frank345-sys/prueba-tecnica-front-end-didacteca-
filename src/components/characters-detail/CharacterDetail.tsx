@@ -1,17 +1,14 @@
 'use client'
 
-import Link from 'next/link'
-
 import { AnimatePresence, motion } from 'framer-motion'
 
 import { EmptyState, ErrorMessage, Spinner } from '@/components/ui/primitives'
 import { OVERLAY_FADE } from '@/constants/animations'
-import { MAX_FAVORITES } from '@/constants/favorites'
-import { useFavoritesStore } from '@/store/useFavoritesStore'
 import {
   ASYNC_CONTENT_KEYS,
   getAsyncContentKey,
 } from '@/utils/async-content-key'
+import { USER_FACING_FETCH_ERROR } from '@/utils/user-facing-error'
 
 import { useCharacterDetail } from './hooks/useCharacterDetail'
 import { CharacterDetailCard } from './subcomponentes'
@@ -24,27 +21,13 @@ type CharacterDetailProps = {
  * Vista de detalle: origen, ubicación, episodios y favoritos.
  */
 export function CharacterDetail({ characterId }: CharacterDetailProps) {
-  const {
-    character,
-    episodeCount,
-    loading,
-    error,
-    hasData,
-    isEmpty,
-    isNotFound,
-    isValidId,
-  } = useCharacterDetail(characterId)
-
-  const numericId = Number(characterId)
-  const isFavorite = useFavoritesStore((state) => state.isFavorite(numericId))
-  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite)
-  const favoriteIds = useFavoritesStore((state) => state.favoriteIds)
+  const { route, favorites, query } = useCharacterDetail(characterId)
 
   const contentKey = getAsyncContentKey({
-    loading,
-    error,
-    hasData,
-    isEmpty,
+    loading: query.loading,
+    error: query.error,
+    hasData: query.hasData,
+    isEmpty: query.isEmpty,
     dataKey: characterId,
   })
 
@@ -53,46 +36,29 @@ export function CharacterDetail({ characterId }: CharacterDetailProps) {
       return <Spinner className="py-16" />
     }
 
-    if (contentKey === ASYNC_CONTENT_KEYS.error && error) {
-      return (
-        <ErrorMessage
-          message={`Error al cargar el personaje: ${error.message}`}
-        />
-      )
+    if (contentKey === ASYNC_CONTENT_KEYS.error && query.error) {
+      return <ErrorMessage message={USER_FACING_FETCH_ERROR} />
     }
 
     if (contentKey === ASYNC_CONTENT_KEYS.empty) {
       return (
         <EmptyState
-          title={
-            isNotFound || !isValidId
-              ? 'Personaje no encontrado'
-              : 'Sin datos del personaje'
-          }
+          title={route.emptyTitle}
           description="Comprueba el enlace o vuelve al listado para elegir otro personaje."
-          action={
-            <Link
-              href="/"
-              className="text-sm font-medium text-emerald-700 underline-offset-2 hover:underline"
-            >
-              Volver al listado
-            </Link>
-          }
+          actionLabel="Volver al listado"
         />
       )
     }
 
-    if (!character) return null
+    if (!query.character) return null
 
     return (
       <CharacterDetailCard
-        character={character}
-        episodeCount={episodeCount}
-        isFavorite={isFavorite}
-        onToggleFavorite={() => toggleFavorite(numericId)}
-        showFavoritesLimitWarning={
-          !isFavorite && favoriteIds.length >= MAX_FAVORITES
-        }
+        character={query.character}
+        episodeCount={query.episodeCount}
+        isFavorite={favorites.isFavorite}
+        onToggleFavorite={favorites.onToggle}
+        showFavoritesLimitWarning={favorites.atLimit}
       />
     )
   }

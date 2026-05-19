@@ -41,7 +41,7 @@ export function Pagination({
       >
         Anterior
       </Button>
-      <span className="text-sm text-zinc-600">
+      <span className="text-sm text-zinc-600" aria-current="page">
         Página {page} de {totalPages}
       </span>
       <Button

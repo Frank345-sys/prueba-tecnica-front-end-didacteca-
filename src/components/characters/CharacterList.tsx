@@ -17,6 +17,7 @@ import {
   ASYNC_CONTENT_KEYS,
   getAsyncContentKey,
 } from '@/utils/async-content-key'
+import { USER_FACING_FETCH_ERROR } from '@/utils/user-facing-error'
 
 import { useCharacterList } from './hooks/useCharacterList'
 import { CharacterFilters, CharacterSpeciesChart } from './subcomponentes'
@@ -29,27 +30,14 @@ const gridClasses =
  * Orquesta estados de carga, error y vacío con {@link getAsyncContentKey}.
  */
 export function CharacterList() {
-  const {
-    search,
-    setSearch,
-    page,
-    setPage,
-    loading,
-    error,
-    data,
-    characters,
-    totalPages,
-    totalCountLabel,
-    viewMode,
-    setViewMode,
-  } = useCharacterList()
+  const { ui, filters, query } = useCharacterList()
 
   const contentKey = getAsyncContentKey({
-    loading,
-    error,
-    hasData: data !== undefined,
-    isEmpty: characters.length === 0,
-    page,
+    loading: query.loading,
+    error: query.error,
+    hasData: query.hasData,
+    isEmpty: query.characters.length === 0,
+    page: filters.page,
   })
 
   function renderContent() {
@@ -57,12 +45,8 @@ export function CharacterList() {
       return <Spinner className="py-16" />
     }
 
-    if (contentKey === ASYNC_CONTENT_KEYS.error && error) {
-      return (
-        <ErrorMessage
-          message={`Error al cargar personajes: ${error.message}`}
-        />
-      )
+    if (contentKey === ASYNC_CONTENT_KEYS.error && query.error) {
+      return <ErrorMessage message={USER_FACING_FETCH_ERROR} />
     }
 
     if (contentKey === ASYNC_CONTENT_KEYS.noData) {
@@ -85,10 +69,10 @@ export function CharacterList() {
 
     return (
       <div className="flex flex-col gap-8">
-        <CharacterSpeciesChart characters={characters} />
-        {viewMode === 'list' ? (
+        <CharacterSpeciesChart characters={query.characters} />
+        {ui.viewMode === 'list' ? (
           <ul className={gridClasses}>
-            {characters.map((character, index) => (
+            {query.characters.map((character, index) => (
               <ListItem
                 key={character.id}
                 character={character}
@@ -98,7 +82,7 @@ export function CharacterList() {
           </ul>
         ) : (
           <ul className={cn(gridClasses, 'xl:grid-cols-4')}>
-            {characters.map((character, index) => (
+            {query.characters.map((character, index) => (
               <CardItem
                 key={character.id}
                 character={character}
@@ -109,11 +93,13 @@ export function CharacterList() {
         )}
         <div className="flex flex-col items-center justify-center gap-2">
           <Pagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
+            page={filters.page}
+            totalPages={query.totalPages}
+            onPageChange={filters.setPage}
           />
-          <p className="min-h-5 text-sm text-zinc-600">{totalCountLabel}</p>
+          <p className="min-h-5 text-sm text-zinc-600">
+            {query.totalCountLabel}
+          </p>
         </div>
       </div>
     )
@@ -125,13 +111,16 @@ export function CharacterList() {
         <div
           className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between`}
         >
-          <CharacterFilters search={search} onSearchChange={setSearch} />
-          <ViewToggle view={viewMode} onViewChange={setViewMode} />
+          <CharacterFilters
+            search={filters.search}
+            onSearchChange={filters.setSearch}
+          />
+          <ViewToggle view={ui.viewMode} onViewChange={ui.setViewMode} />
         </div>
       </div>
 
       <AnimatePresence mode="wait">
-        <motion.div key={contentKey} {...OVERLAY_FADE}>
+        <motion.div key={`${contentKey}-${ui.viewMode}`} {...OVERLAY_FADE}>
           {renderContent()}
         </motion.div>
       </AnimatePresence>
