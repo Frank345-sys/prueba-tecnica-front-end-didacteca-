@@ -43,12 +43,19 @@ export type CharactersQueryVariables = {
   filter?: CharacterFilter
 }
 
-/** Respuesta tipada de la query por IDs de favoritos. */
-export type CharactersByIdsQueryResult = {
-  charactersByIds: (Character | null)[] | null
+/** Lugar (origen o ubicación) asociado a un personaje. */
+export type CharacterPlace = {
+  name: string
 }
 
-/** Variables de la query por IDs. */
-export type CharactersByIdsQueryVariables = {
-  ids: string[]
+/** Episodio referenciado en el detalle del personaje. */
+export type CharacterEpisodeRef = {
+  id: string
+}
+
+/** Personaje con campos adicionales para la vista de detalle. */
+export type CharacterDetail = Character & {
+  origin: CharacterPlace
+  location: CharacterPlace
+  episode: CharacterEpisodeRef[]
 }

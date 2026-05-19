@@ -8,12 +8,15 @@ import { GET_CHARACTERS_BY_IDS } from '@/graphql/queries/characters-by-ids'
 import { useFavoritesStore } from '@/store/useFavoritesStore'
 import { sortCharactersByFavoriteOrder } from '@/utils/sort-characters-by-favorite-order'
 
-import type {
-  Character,
-  CharactersByIdsQueryResult,
-  CharactersByIdsQueryVariables,
-  CharacterViewMode,
-} from '@/types/rick-and-morty'
+import type { Character, CharacterViewMode } from '@/types/rick-and-morty'
+
+type CharactersByIdsQueryResult = {
+  charactersByIds: (Character | null)[] | null
+}
+
+type CharactersByIdsQueryVariables = {
+  ids: string[]
+}
 
 /**
  * Carga los personajes favoritos respetando el orden del store.
