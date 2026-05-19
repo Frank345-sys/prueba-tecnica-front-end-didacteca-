@@ -1,0 +1,43 @@
+module.exports = {
+  extends: ['@commitlint/config-conventional'],
+  rules: {
+    //'subject-case': [2, 'always', 'lower-case'],
+    'subject-case': [0],
+    'scope-case': [2, 'always', 'kebab-case'],
+    'scope-min-length': [2, 'always', 2],
+    'header-max-length': [2, 'always', 100],
+    'scope-enum': [
+      2,
+      'always',
+      [
+        // Convencionales
+        'tokens',
+        'components',
+        'hooks',
+        'utils',
+        'styles',
+        'layout',
+        'theme',
+        'assets',
+        'test',
+        'workflow',
+        'config',
+        'deps',
+        'deps-dev',
+        'readme',
+        'gitflow',
+        'build',
+        'ci',
+        'release',
+        // Prueba técnica (Rick and Morty)
+        'page',
+        'favorites',
+        'character',
+        'graphql',
+        'store',
+        'charts',
+        'providers',
+      ],
+    ],
+  },
+}

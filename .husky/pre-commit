@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+set -e
+
+echo "[pre-commit] Autocorrección de archivos en stage (lint-staged)..."
+npx lint-staged
+
+echo "[pre-commit] Verificación: formato, ESLint y TypeScript..."
+npm run precommit:verify
+
+echo "[pre-commit] Listo. Si lint-staged modificó archivos, ya están re-staged."
