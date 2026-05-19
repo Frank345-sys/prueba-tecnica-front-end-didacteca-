@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 
 import { Badge, Card, FavoriteButton } from '@/components/ui/primitives'
 import { MOTION_ANIMATION } from '@/constants/animations'
+import { cn } from '@/lib/cn'
 import { useFavoritesStore } from '@/store/useFavoritesStore'
 import {
   getStatusBadgeSolidClassName,
@@ -19,8 +20,8 @@ type ListItemProps = {
   character: Character
   /** Índice en la lista para escalonar la animación de entrada. */
   index?: number
-  /** Usa `motion.div` en lugar de `motion.li` dentro de listas compuestas. */
-  embedded?: boolean
+  /** Elemento raíz animado (`li` en listados, `div` en filas compuestas de favoritos). */
+  as?: 'li' | 'div'
 }
 
 /**
@@ -28,23 +29,21 @@ type ListItemProps = {
  *
  * @param props.character - Datos del personaje desde GraphQL.
  * @param props.index - Retraso incremental en la animación Framer Motion.
+ * @param props.as - Etiqueta del contenedor animado; por defecto `li`.
  */
 export function ListItem({
   character,
   index = 0,
-  embedded = false,
+  as: Tag = 'li',
 }: ListItemProps) {
   const id = Number(character.id)
-  const isFavorite = useFavoritesStore((state) => state.isFavorite(id))
-  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite)
-  const Wrapper = embedded ? motion.div : motion.li
-  const wrapperProps = embedded
-    ? { className: 'min-w-0' }
-    : { className: 'list-none' }
+  const isFavorite = useFavoritesStore((state) => state.actions.isFavorite(id))
+  const toggle = useFavoritesStore((state) => state.actions.toggle)
+  const MotionTag = motion[Tag]
 
   return (
-    <Wrapper
-      {...wrapperProps}
+    <MotionTag
+      className={cn(Tag === 'li' ? 'list-none' : 'min-w-0')}
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{
@@ -54,11 +53,11 @@ export function ListItem({
       }}
     >
       <Card className="flex items-center gap-4 p-3">
-        <Link
-          href={`/character/${character.id}`}
-          className={`group flex w-full items-center gap-4 focus-visible:outline-none`}
-        >
-          <div className="relative size-28 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
+        <div className="relative size-28 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
+          <Link
+            href={`/character/${character.id}`}
+            className="group block size-full focus-visible:outline-none"
+          >
             <Image
               src={character.image}
               alt={character.name}
@@ -67,39 +66,41 @@ export function ListItem({
               className={`size-full object-cover transition-transform duration-300 group-hover:scale-105`}
               sizes="100px"
             />
-            <FavoriteButton
-              isFavorite={isFavorite}
-              onToggle={() => toggleFavorite(id)}
-              size="sm"
-              className="absolute top-1 right-1 z-10"
-            />
-          </div>
-          <div className="space-y-2">
-            <h3 className="line-clamp-2 font-semibold text-zinc-900 group-hover:text-emerald-700">
-              {character.name}
-            </h3>
-            <dl className="space-y-1 text-sm">
-              <div className="flex items-center gap-1.5">
-                <dt className="text-zinc-500">Género:</dt>
-                <dd className="text-zinc-800">{character.gender}</dd>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <dt className="text-zinc-500">Especie:</dt>
-                <dd className="text-zinc-800">{character.species}</dd>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <dt className="text-zinc-500">Estado:</dt>
+          </Link>
+          <FavoriteButton
+            isFavorite={isFavorite}
+            onToggle={() => toggle(id)}
+            size="sm"
+            className="absolute top-1 right-1 z-10"
+          />
+        </div>
+        <div className="group flex-1 space-y-2">
+          <h3 className="line-clamp-2 font-semibold text-zinc-900 group-hover:text-emerald-700">
+            {character.name}
+          </h3>
+          <dl className="space-y-1 text-sm">
+            <div className="flex items-center gap-1.5">
+              <dt className="text-zinc-500">Género:</dt>
+              <dd className="text-zinc-800">{character.gender}</dd>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <dt className="text-zinc-500">Especie:</dt>
+              <dd className="text-zinc-800">{character.species}</dd>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <dt className="text-zinc-500">Estado:</dt>
+              <dd>
                 <Badge
                   variant={getStatusBadgeVariant(character.status)}
                   className={getStatusBadgeSolidClassName(character.status)}
                 >
                   {character.status}
                 </Badge>
-              </div>
-            </dl>
-          </div>
-        </Link>
+              </dd>
+            </div>
+          </dl>
+        </div>
       </Card>
-    </Wrapper>
+    </MotionTag>
   )
 }

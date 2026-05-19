@@ -25,8 +25,8 @@ type CardItemProps = {
   character: Character
   /** Índice en la lista para escalonar la animación de entrada. */
   index?: number
-  /** Usa `div` en lugar de `li` cuando el ítem va dentro de un contenedor con controles (p. ej. favoritos). */
-  embedded?: boolean
+  /** Elemento raíz animado (`li` en listados, `div` dentro de filas compuestas). */
+  as?: 'li' | 'div'
 }
 
 /**
@@ -35,25 +35,21 @@ type CardItemProps = {
  *
  * @param props.character - Datos del personaje desde GraphQL.
  * @param props.index - Retraso incremental en la animación Framer Motion.
+ * @param props.as - Etiqueta del contenedor animado; por defecto `li`.
  */
 export function CardItem({
   character,
   index = 0,
-  embedded = false,
+  as: Tag = 'li',
 }: CardItemProps) {
   const id = Number(character.id)
-  const isFavorite = useFavoritesStore((state) => state.isFavorite(id))
-  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite)
-  const Wrapper = embedded ? motion.div : motion.li
-  const wrapperProps = embedded
-    ? { className: 'min-w-0 flex-1' }
-    : {
-        className: 'list-none',
-      }
+  const isFavorite = useFavoritesStore((state) => state.actions.isFavorite(id))
+  const toggle = useFavoritesStore((state) => state.actions.toggle)
+  const MotionTag = motion[Tag]
 
   return (
-    <Wrapper
-      {...wrapperProps}
+    <MotionTag
+      className={cn(Tag === 'li' ? 'list-none' : 'min-w-0 flex-1')}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
@@ -62,7 +58,7 @@ export function CardItem({
         ease: MOTION_ANIMATION.easing.standard,
       }}
     >
-      <Card className="flex h-full flex-col overflow-hidden border-sky-400">
+      <Card className="group flex h-full flex-col overflow-hidden border-sky-400">
         <div className="relative aspect-square overflow-hidden bg-zinc-100">
           <Link
             href={`/character/${character.id}`}
@@ -79,7 +75,7 @@ export function CardItem({
           </Link>
           <FavoriteButton
             isFavorite={isFavorite}
-            onToggle={() => toggleFavorite(id)}
+            onToggle={() => toggle(id)}
             className="absolute top-2.5 right-2.5 z-20"
           />
           <Badge
@@ -102,6 +98,6 @@ export function CardItem({
           </div>
         </CardContent>
       </Card>
-    </Wrapper>
+    </MotionTag>
   )
 }

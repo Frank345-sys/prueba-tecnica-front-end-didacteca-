@@ -1,13 +1,15 @@
-import { cn } from '@/lib/cn'
+import Link from 'next/link'
 
-import type { ReactNode } from 'react'
+import { cn } from '@/lib/cn'
 
 type EmptyStateProps = {
   /** Título principal del estado vacío. */
   title: string
   description?: string
-  /** Contenido opcional (p. ej. botón para limpiar filtros). */
-  action?: ReactNode
+  /** Texto del enlace de acción (p. ej. volver al listado). */
+  actionLabel?: string
+  /** Destino del enlace; por defecto `/`. */
+  actionHref?: string
   className?: string
 }
 
@@ -16,18 +18,20 @@ type EmptyStateProps = {
  *
  * @param props.title - Encabezado del bloque vacío.
  * @param props.description - Texto de ayuda opcional.
- * @param props.action - Slot para acciones secundarias.
+ * @param props.actionLabel - Etiqueta del enlace de acción opcional.
+ * @param props.actionHref - Ruta del enlace; por defecto el listado principal.
  */
 export function EmptyState({
   title,
   description,
-  action,
+  actionLabel,
+  actionHref = '/',
   className,
 }: EmptyStateProps) {
   return (
     <div
       className={cn(
-        `flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-zinc-50 px-6 py-12 text-center`,
+        'flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-zinc-50 px-6 py-12 text-center',
         className
       )}
     >
@@ -35,7 +39,14 @@ export function EmptyState({
       {description ? (
         <p className="mt-2 max-w-md text-sm text-zinc-600">{description}</p>
       ) : null}
-      {action ? <div className="mt-4">{action}</div> : null}
+      {actionLabel ? (
+        <Link
+          href={actionHref}
+          className="mt-4 text-sm font-medium text-emerald-700 underline-offset-2 hover:underline"
+        >
+          {actionLabel}
+        </Link>
+      ) : null}
     </div>
   )
 }
