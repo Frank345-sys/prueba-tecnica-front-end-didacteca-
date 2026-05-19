@@ -19,6 +19,8 @@ type ListItemProps = {
   character: Character
   /** Índice en la lista para escalonar la animación de entrada. */
   index?: number
+  /** Usa `motion.div` en lugar de `motion.li` dentro de listas compuestas. */
+  embedded?: boolean
 }
 
 /**
@@ -27,13 +29,22 @@ type ListItemProps = {
  * @param props.character - Datos del personaje desde GraphQL.
  * @param props.index - Retraso incremental en la animación Framer Motion.
  */
-export function ListItem({ character, index = 0 }: ListItemProps) {
+export function ListItem({
+  character,
+  index = 0,
+  embedded = false,
+}: ListItemProps) {
   const id = Number(character.id)
   const isFavorite = useFavoritesStore((state) => state.isFavorite(id))
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite)
+  const Wrapper = embedded ? motion.div : motion.li
+  const wrapperProps = embedded
+    ? { className: 'min-w-0' }
+    : { className: 'list-none' }
 
   return (
-    <motion.li
+    <Wrapper
+      {...wrapperProps}
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{
@@ -41,7 +52,6 @@ export function ListItem({ character, index = 0 }: ListItemProps) {
         delay: index * 0.03,
         ease: MOTION_ANIMATION.easing.standard,
       }}
-      className="list-none"
     >
       <Card className="flex items-center gap-4 p-3">
         <Link
@@ -90,6 +100,6 @@ export function ListItem({ character, index = 0 }: ListItemProps) {
           </div>
         </Link>
       </Card>
-    </motion.li>
+    </Wrapper>
   )
 }

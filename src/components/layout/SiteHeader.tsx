@@ -1,5 +1,6 @@
 import Link from 'next/link'
 
+import { SiteNav } from '@/components/layout/SiteNav'
 import { cn } from '@/lib/cn'
 
 type SiteHeaderProps = {
@@ -26,14 +27,7 @@ export function SiteHeader({ className }: SiteHeaderProps) {
             Explora personajes · Didacteca
           </p>
         </Link>
-        <nav aria-label="Principal" className="shrink-0">
-          <Link
-            href="/"
-            className="rounded-md bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-emerald-200/80"
-          >
-            Personajes
-          </Link>
-        </nav>
+        <SiteNav />
       </div>
     </header>
   )
