@@ -11,6 +11,7 @@ export const ASYNC_CONTENT_KEYS = {
 export type AsyncContentKey =
   | (typeof ASYNC_CONTENT_KEYS)[keyof typeof ASYNC_CONTENT_KEYS]
   | `data-${number}`
+  | `data-${string}`
 
 export type GetAsyncContentKeyOptions = {
   loading: boolean
@@ -21,6 +22,8 @@ export type GetAsyncContentKeyOptions = {
   isEmpty?: boolean
   /** Si se indica, la clave de éxito será `data-{page}` para reanimar al paginar. */
   page?: number
+  /** Clave arbitraria para `data-{dataKey}` (p. ej. orden de favoritos). */
+  dataKey?: string
 }
 
 /**
@@ -36,11 +39,13 @@ export function getAsyncContentKey({
   hasData,
   isEmpty = false,
   page,
+  dataKey,
 }: GetAsyncContentKeyOptions): AsyncContentKey {
   if (loading) return ASYNC_CONTENT_KEYS.loading
   if (error) return ASYNC_CONTENT_KEYS.error
   if (!hasData) return ASYNC_CONTENT_KEYS.noData
   if (isEmpty) return ASYNC_CONTENT_KEYS.empty
+  if (dataKey !== undefined) return `data-${dataKey}`
   if (page !== undefined) return `data-${page}`
 
   return ASYNC_CONTENT_KEYS.data

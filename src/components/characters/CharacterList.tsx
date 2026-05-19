@@ -2,7 +2,9 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 
-import { ViewToggle, ViewToggleResults } from '@/components/ui/compounds'
+import { ViewToggle } from '@/components/ui/compounds'
+import { CardItem } from '@/components/ui/compounds/CardItem'
+import { ListItem } from '@/components/ui/compounds/ListItem'
 import {
   EmptyState,
   ErrorMessage,
@@ -10,6 +12,7 @@ import {
   Spinner,
 } from '@/components/ui/primitives'
 import { OVERLAY_FADE } from '@/constants/animations'
+import { cn } from '@/lib/cn'
 import {
   ASYNC_CONTENT_KEYS,
   getAsyncContentKey,
@@ -17,6 +20,9 @@ import {
 
 import { useCharacterList } from './hooks/useCharacterList'
 import { CharacterFilters, CharacterSpeciesChart } from './subcomponentes'
+
+const gridClasses =
+  'grid grid-cols-1 list-none gap-4 md:grid-cols-2 lg:grid-cols-3'
 
 /**
  * Contenedor del listado: filtros, gráfico por especie, resultados y paginación.
@@ -80,7 +86,27 @@ export function CharacterList() {
     return (
       <div className="flex flex-col gap-8">
         <CharacterSpeciesChart characters={characters} />
-        <ViewToggleResults characters={characters} viewMode={viewMode} />
+        {viewMode === 'list' ? (
+          <ul className={gridClasses}>
+            {characters.map((character, index) => (
+              <ListItem
+                key={character.id}
+                character={character}
+                index={index}
+              />
+            ))}
+          </ul>
+        ) : (
+          <ul className={cn(gridClasses, 'xl:grid-cols-4')}>
+            {characters.map((character, index) => (
+              <CardItem
+                key={character.id}
+                character={character}
+                index={index}
+              />
+            ))}
+          </ul>
+        )}
         <div className="flex flex-col items-center justify-center gap-2">
           <Pagination
             page={page}

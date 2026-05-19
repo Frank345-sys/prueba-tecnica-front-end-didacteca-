@@ -25,6 +25,8 @@ type CardItemProps = {
   character: Character
   /** Índice en la lista para escalonar la animación de entrada. */
   index?: number
+  /** Usa `div` en lugar de `li` cuando el ítem va dentro de un contenedor con controles (p. ej. favoritos). */
+  embedded?: boolean
 }
 
 /**
@@ -34,13 +36,24 @@ type CardItemProps = {
  * @param props.character - Datos del personaje desde GraphQL.
  * @param props.index - Retraso incremental en la animación Framer Motion.
  */
-export function CardItem({ character, index = 0 }: CardItemProps) {
+export function CardItem({
+  character,
+  index = 0,
+  embedded = false,
+}: CardItemProps) {
   const id = Number(character.id)
   const isFavorite = useFavoritesStore((state) => state.isFavorite(id))
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite)
+  const Wrapper = embedded ? motion.div : motion.li
+  const wrapperProps = embedded
+    ? { className: 'min-w-0 flex-1' }
+    : {
+        className: 'list-none',
+      }
 
   return (
-    <motion.li
+    <Wrapper
+      {...wrapperProps}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
@@ -48,7 +61,6 @@ export function CardItem({ character, index = 0 }: CardItemProps) {
         delay: index * 0.04,
         ease: MOTION_ANIMATION.easing.standard,
       }}
-      className="list-none"
     >
       <Card className="flex h-full flex-col overflow-hidden border-sky-400">
         <div className="relative aspect-square overflow-hidden bg-zinc-100">
@@ -90,6 +102,6 @@ export function CardItem({ character, index = 0 }: CardItemProps) {
           </div>
         </CardContent>
       </Card>
-    </motion.li>
+    </Wrapper>
   )
 }
