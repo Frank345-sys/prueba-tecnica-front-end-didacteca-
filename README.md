@@ -117,6 +117,23 @@ src/
 | `/favorites`      | Favoritos ordenables (máx. 5)                    |
 | `/character/[id]` | Detalle: origen, ubicación, episodios, favoritos |
 
+## Estrategias de renderizado (Next.js App Router)
+
+Cada ruta combina **shell en servidor** (SSG/ISR) con **islas cliente** (CSR) donde hace falta interactividad o `localStorage`.
+
+| Ruta              | Shell (servidor) | Datos / UI interactiva  | Estrategia                                                            |
+| ----------------- | ---------------- | ----------------------- | --------------------------------------------------------------------- |
+| `/`               | SSG              | CSR — Apollo, búsqueda  | `dynamic = 'force-static'` + `CharacterList` (`'use client'`)         |
+| `/favorites`      | SSG              | CSR — Zustand + Apollo  | `dynamic = 'force-static'`; favoritos solo en navegador               |
+| `/character/[id]` | ISR (1 h)        | CSR — Apollo en detalle | `revalidate = 3600`, `generateStaticParams` (IDs 1–20), `loading.tsx` |
+
+- **SSG**: `/` y `/favorites` se prerenderizan en build; el HTML inicial incluye layout, cabecera y textos estáticos.
+- **ISR**: `/character/[id]` regenera metadatos y rutas pregeneradas cada hora (`revalidate = 3600` en `src/app/character/[id]/page.tsx`). IDs fuera del rango inicial se sirven bajo demanda (`dynamicParams = true`).
+- **CSR**: listados, filtros, favoritos y detalle consumen GraphQL con Apollo Client en el cliente (`src/components/providers/`).
+- **SSR / streaming**: `src/app/character/[id]/loading.tsx` muestra spinner mientras resuelve el segmento dinámico.
+
+Peticiones GraphQL en servidor (metadatos, ISR): `src/lib/graphql-server.ts`. En cliente: Apollo (`src/lib/apollo-client.ts`).
+
 ## GraphQL
 
 Queries en `src/graphql/queries/`:
