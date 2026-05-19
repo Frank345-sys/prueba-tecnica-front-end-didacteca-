@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
 type ClassValue = string | undefined | null | false
@@ -14,5 +15,5 @@ type ClassValue = string | undefined | null | false
  * ```
  */
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(inputs.filter(Boolean).join(''))
+  return twMerge(clsx(inputs))
 }
