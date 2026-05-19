@@ -17,6 +17,7 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
+/** Metadatos globales (título con plantilla `%s` y descripción por defecto). */
 export const metadata: Metadata = {
   title: {
     default: 'Rick and Morty | Didacteca',

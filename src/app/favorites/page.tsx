@@ -2,6 +2,13 @@ import { FavoritesList } from '@/components/favorites/FavoritesList'
 
 import type { Metadata } from 'next'
 
+/**
+ * SSG: shell estático en build.
+ * CSR: datos en {@link FavoritesList} (localStorage + Apollo); no prerenderizable en servidor.
+ */
+export const dynamic = 'force-static'
+
+/** Metadatos de la ruta `/favorites`. */
 export const metadata: Metadata = {
   title: 'Favoritos',
   description: 'Tus personajes favoritos de Rick and Morty (máximo 5)',

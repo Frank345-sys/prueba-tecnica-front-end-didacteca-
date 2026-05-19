@@ -1,5 +1,11 @@
 import { CharacterList } from '@/components/characters/CharacterList'
 
+/**
+ * SSG: shell y metadatos estáticos en build.
+ * CSR: listado, búsqueda y favoritos en {@link CharacterList} (Apollo + cliente).
+ */
+export const dynamic = 'force-static'
+
 /** Página principal: listado de personajes con búsqueda, gráfico y favoritos. */
 export default function Home() {
   return (
