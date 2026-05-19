@@ -17,21 +17,25 @@ import type {
 /**
  * Estado y petición GraphQL del listado de personajes.
  *
- * @returns Búsqueda, página, modo de vista, datos de Apollo y etiqueta de total.
+ * @returns Estado agrupado por UI, filtros y datos de la query.
  */
 export function useCharacterList() {
+  // —— UI ——
+  const [viewMode, setViewMode] = useState<CharacterViewMode>('grid')
+
+  // —— Filtros y paginación ——
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
-  const [viewMode, setViewMode] = useState<CharacterViewMode>('grid')
   const deferredSearch = useDeferredValue(search.trim())
 
-  function handleSearchChange(value: string) {
+  function setSearchAndResetPage(value: string) {
     setSearch(value)
     setPage(1)
   }
 
   const filter = deferredSearch ? { name: deferredSearch } : undefined
 
+  // —— Petición ——
   const { data, loading, error } = useQuery<
     CharactersQueryResult,
     CharactersQueryVariables
@@ -42,25 +46,32 @@ export function useCharacterList() {
   const characters: Character[] = data?.characters.results ?? []
   const totalCount = data?.characters.info.count ?? 0
   const totalPages = data?.characters.info.pages ?? 0
-
-  const canShowTotalCount = !loading && !error && data !== undefined
-  const totalCountLabel = canShowTotalCount
-    ? formatCharacterCountLabel(totalCount)
-    : '\u00A0'
+  const safePage = totalPages > 0 ? Math.min(page, totalPages) : page
+  const hasData = data !== undefined
+  const totalCountLabel =
+    !loading && !error && hasData
+      ? formatCharacterCountLabel(totalCount)
+      : '\u00A0'
 
   return {
-    search,
-    setSearch: handleSearchChange,
-    page,
-    setPage,
-    loading,
-    error,
-    data,
-    characters,
-    totalCount,
-    totalPages,
-    totalCountLabel,
-    viewMode,
-    setViewMode,
+    ui: {
+      viewMode,
+      setViewMode,
+    },
+    filters: {
+      search,
+      setSearch: setSearchAndResetPage,
+      page: safePage,
+      setPage,
+    },
+    query: {
+      characters,
+      totalPages,
+      totalCount,
+      totalCountLabel,
+      hasData,
+      loading,
+      error,
+    },
   }
 }
