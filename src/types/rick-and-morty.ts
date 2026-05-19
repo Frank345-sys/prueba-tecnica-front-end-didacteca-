@@ -42,3 +42,13 @@ export type CharactersQueryVariables = {
   page?: number
   filter?: CharacterFilter
 }
+
+/** Respuesta tipada de la query por IDs de favoritos. */
+export type CharactersByIdsQueryResult = {
+  charactersByIds: (Character | null)[] | null
+}
+
+/** Variables de la query por IDs. */
+export type CharactersByIdsQueryVariables = {
+  ids: string[]
+}
